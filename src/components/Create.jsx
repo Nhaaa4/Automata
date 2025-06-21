@@ -20,7 +20,6 @@ export default function Create({
   setTransitionRows,
   automaton,
   createAutomaton,
-  initializeWithSample,
   renderAutomaton,
 }) {
   const getStatesList = () => {
@@ -62,9 +61,6 @@ export default function Create({
         <CardHeader>
           <CardTitle>Create Finite Automaton</CardTitle>
           <CardDescription>Define your finite automaton with table-based transitions</CardDescription>
-          <Button variant="outline" onClick={initializeWithSample} className="mt-2">
-            Load Sample NFA
-          </Button>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

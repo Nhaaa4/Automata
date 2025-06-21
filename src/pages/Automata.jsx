@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { XCircle } from "lucide-react"
-import { FiniteAutomata } from "../lib/automata.js"
+import { FiniteAutomata } from "../lib/automata"
 import Create from "../components/Create"
 import Analyze from "../components/Analyze"
 import Accepted from "../components/Accepted"
@@ -16,6 +16,7 @@ export default function Automata() {
   const [inputFinalStates, setInputFinalStates] = useState([])
   const [transitionRows, setTransitionRows] = useState([])
   const [testInput, setTestInput] = useState("")
+  const [isLoaded, setIsLoaded] = useState(false)
   const [results, setResults] = useState({
     isDFA: null,
     stringAccepted: null,
@@ -24,47 +25,59 @@ export default function Automata() {
     error: null,
   })
 
+  // Load saved state on component mount
   useEffect(() => {
-    initializeWithSample()
+    loadSavedState()
   }, [])
 
-  const initializeWithSample = () => {
-    setInputStates("q0, q1, q2, q3")
-    setInputAlphabet("a, b")
-    setInputStartState("q0")
-    setInputFinalStates(["q3"])
-
-    const sampleRows = [
-      { id: "1", fromState: "q0", symbol: "a", toStates: ["q0", "q1"] },
-      { id: "2", fromState: "q0", symbol: "b", toStates: ["q0"] },
-      { id: "3", fromState: "q1", symbol: "b", toStates: ["q2"] },
-      { id: "4", fromState: "q2", symbol: "b", toStates: ["q3"] },
-      { id: "5", fromState: "q3", symbol: "a", toStates: ["q3"] },
-      { id: "6", fromState: "q3", symbol: "b", toStates: ["q3"] },
-    ]
-    setTransitionRows(sampleRows)
-
-    // Create the sample automaton
-    const states = ["q0", "q1", "q2", "q3"]
-    const symbols = ["a", "b"]
-    const startState = "q0"
-    const finalStates = ["q3"]
-    const transitions = {
-      q0: { a: ["q0", "q1"], b: ["q0"] },
-      q1: { b: ["q2"] },
-      q2: { b: ["q3"] },
-      q3: { a: ["q3"], b: ["q3"] },
+ // Save state whenever inputs change (but only after initial load)
+  useEffect(() => {
+    const saveState = () => {
+    try {
+      const state = {
+        inputStates,
+        inputAlphabet,
+        inputStartState,
+        inputFinalStates,
+        transitionRows,
+        testInput,
+        timestamp: Date.now(),
+      }
+      localStorage.setItem("finite-automata-state", JSON.stringify(state))
+    } catch (error) {
+      console.error("Error saving state:", error)
     }
+  }
+    if (isLoaded) {
+      saveState()
+    }
+  }, [inputStates, inputAlphabet, inputStartState, inputFinalStates, transitionRows, testInput, isLoaded])
 
-    const nfa = new FiniteAutomata(states, symbols, startState, finalStates, transitions)
-    setAutomaton(nfa)
-    setResults({
-      isDFA: null,
-      stringAccepted: null,
-      convertedDFA: null,
-      minimizedDFA: null,
-      error: null,
-    })
+  
+
+  const loadSavedState = () => {
+    try {
+      const saved = localStorage.getItem("finite-automata-state")
+
+      if (saved) {
+        const state = JSON.parse(saved)
+
+        setInputStates(state.inputStates || "")
+        setInputAlphabet(state.inputAlphabet || "")
+        setInputStartState(state.inputStartState || "")
+        setInputFinalStates(state.inputFinalStates || [])
+        setTransitionRows(state.transitionRows || [])
+        setTestInput(state.testInput || "")
+
+        console.log("State loaded successfully")
+      } else {
+        console.log("No saved state found")
+      }
+    } catch (error) {
+      console.error("Error loading saved state:", error)
+    } finally {
+      setIsLoaded(true)
+    }
   }
 
   const createAutomaton = () => {
@@ -179,7 +192,6 @@ export default function Automata() {
           setTransitionRows={setTransitionRows}
           automaton={automaton}
           createAutomaton={createAutomaton}
-          initializeWithSample={initializeWithSample}
           renderAutomaton={renderAutomaton}
         />
 
